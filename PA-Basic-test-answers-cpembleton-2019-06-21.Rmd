@@ -1,28 +1,25 @@
 ---
-title: "PA- Basic Test Answers"
-output: html_document
+title: "Birth Rates in the US from 1995 to 2017 : An Exploratory Analysis"
+description: |
+  Submitted for Precision-Analytics Entry Exam
+author:
+  - name: Corey Pembleton
+    url: https://data-break.netlify.com
+    affiliation: Precision-Analytics
+    affiliation_url: https://www.precision-analytics.ca/
+date: "`r Sys.Date()`"
+output: distill::distill_article
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+Distill is a publication format for scientific and technical writing, native to the web. 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Learn more about using Distill for R Markdown at <https://rstudio.github.io/distill>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
-```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
