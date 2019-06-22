@@ -40,9 +40,31 @@ Births %>%
 
 #3. Time series plot of total number of births with state with highest average highlighted in red
 
+ggplot(data = ss, aes(x = date, y = pop)) + 
+  geom_line(color = "#FC4E07", size = 2)
+
+Births$Births
+
+Births %>% 
+  group_by(Year) %>% 
+  summarise(total = sum(Births)) %>% 
+  ggplot(aes(x = Year, y = total)) +
+  geom_line(size = 1, color = "lightgray") + 
+  coord_cartesian(xlim = c(1995, 2017)) +
+  ylab("Total Births")+
+  scale_y_continuous(label=scales::comma)+
+  scale_x_continuous(breaks = seq(1995, 2017, 3))+
+  theme_minimal(12) + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(hjust = .75),
+        plot.title = element_text(size=14, hjust = 0.5),
+        plot.caption = element_text(size = 12, hjust = 1),
+        axis.text.y = element_text(hjust = 1),
+        plot.margin = unit(c(1,1,0.5,1), "cm")) +
+  ggtitle("Total Annual US Births, 1995 - 2017")
 
 
-
+seq_along(c(1995:2017))
 
 #4. Regression Model Observing how state and year impact birth rates
 
