@@ -33,24 +33,31 @@ Looks like on the load there were some parsing errors with only 1 col present ou
 
 # 2. Exploratory Data Analysis
 
-Can get to know the data a few ways:
+Can get to know the data a few ways, first, a quick summary of what it looks like:
 
 ```{r}
 summary(Births)
 ```
 
+And to visualize this by type and oberservation, the ```DataExplorer``` package can paint a quick picture quickly:
 
-```{r}
+```{r, echo=FALSE}
 #using DataExplorer
 
-plot_intro(Births, ggtheme = theme_minimal())
+plot_intro(Births, 
+           ggtheme = theme_minimal(),
+           title = "Overview of compiled dataset by data type")
 
 ```
 
 
-What is the missing data situation like:
+This shows something of a mixed picture - with not a single column or row that is complete!  
+
+Looking at the missing data by variable shows some patterns worth exploring further:
+
+
 ```{r, echo=FALSE, layout="l-body"}
-plot_missing(Births, ggtheme = theme_minimal())
+plot_missing(Births, ggtheme = theme_minimal()) + ggtitle("Overview of missing data")
 ```
 
 
@@ -99,9 +106,21 @@ Births %>%
 
 ```
 
-Great, with the newly cleaned dataset, I can now start with the analysis.
+It appears now that the only missing values are from those years without the variables listed in the figure above, can do a quick check of that to verify:
 
-## Time Series Plot
+```{r}
+
+Births %>% 
+  filter(Year < 2003) %>% 
+  nrow()
+
+```
+
+Looks good - time to get on with some more fun things than data cleaning!  
+
+## Time Series Plot  
+
+The time series plot shows a peak in births around 2007, with a trend towards the birth figures of the late 1990's returning in the mid 2010's. 
 
 ```{r, layout="l-body-outset", echo=FALSE}
 Births %>% 
@@ -111,7 +130,9 @@ Births %>%
   geom_line(size = 1, color = "lightgray") + 
   coord_cartesian(xlim = c(1995, 2017)) +
   ylab("Total Births")+
-  scale_y_continuous(label=scales::comma)+
+  scale_y_continuous(label=scales::comma,
+                     limits = c(0, 4500000),
+                     breaks = seq(0, 4500000, 500000)) +
   scale_x_continuous(breaks = seq(1995, 2017, 3))+
   theme_minimal(12) + 
   theme(legend.position = "none",
@@ -126,8 +147,90 @@ Births %>%
 
 
 
+Looking at each state, we see that the golden state has the highest count of births (but tied for last in basketball championship titles in 2019).
+
+```{r, echo=FALSE, layout = "l-body-outset"}
+Births %>% 
+  group_by(Year, State) %>% 
+  #summarise(total = sum(Births)) %>% 
+  ggplot(aes(x = Year, y = Births, group = State)) +
+  geom_line(size = .5, colour = "darkred") +
+  gghighlight::gghighlight(max(Births) > 550000, max_highlight = 1)+
+  coord_cartesian(xlim = c(1995, 2017)) +
+  ylab("Total Births")+
+  scale_y_continuous(label=scales::comma,
+                     limits = c(0, 650000),
+                     breaks = seq(0, 600000, 100000)) +
+  scale_x_continuous(breaks = seq(1995, 2017, 3))+
+  theme_minimal(12) + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(hjust = .75),
+        plot.title = element_text(size=14, hjust = 0.5),
+        plot.caption = element_text(size = 12, hjust = 1),
+        axis.text.y = element_text(hjust = 1),
+        plot.margin = unit(c(1,1,0.5,1), "cm")) +
+  ggtitle("Total Annual US Births by State, 1995 - 2017")
+```
 
 
+## How does are birth rates impacted by state and by year?
+
+Using linear regression, we can estimate how state and year influence birth rates over time:
+
+Looking first at Year alone:
+
+```{r}
+
+#first filter the data before 2002 that doesn't have BR values
+Births_2002_over <- Births %>% filter(Year >= 2003)
+
+#center the Year variable
+Births_2002_over <- Births_2002_over %>% mutate(Year_New = Year-2003)
+
+#run initial model
+model1 <- lm(data = Births_2002_over, formula = `Birth Rate` ~ Year_New)
+
+tmp <- capture.output(summary(model1))
+
+cat(tmp[c(3:4, 9:13, 16:17)], sep='\n')
+```
+
+Which can be graphically represented as:
+
+```{r}
+
+ggplot(Births_2002_over, aes(x = Year, y = `Birth Rate`)) +
+  geom_point() +
+  stat_smooth(method = "lm", formula = y~x, se=FALSE, linetype = 1) +
+  scale_x_continuous(breaks = seq(1995, 2017, 3))+
+  theme_minimal(12) + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(hjust = .75),
+        plot.title = element_text(size=14, hjust = 0.5),
+        plot.caption = element_text(size = 12, hjust = 1),
+        axis.text.y = element_text(hjust = 1),
+        plot.margin = unit(c(1,1,0.5,1), "cm")) +
+  ggtitle("")
+
+```
+
+
+
+### Interpretation  
+This linear model tells me that in 2003 there was a birth rate of 14.2, with an estimated decrease of .16 every year. The year variable is [centered](http://www.med.mcgill.ca/epidemiology/joseph/courses/EPIB-621/centered_var.pdf) around the actual years given (rather than year 0), which makes the interpretation easier to understand, essentially shifting the y-axis to the years of interest. 
+
+
+## Year and State
+
+When accounting for State, the annual change over time sees a very marginally increased rate of decrease (from -.1596 to -.159639), and varying results for different states, with some seeing a decrease and others an increase in the birth rate over time. 
+
+```{r}
+model2 <- lm(data = Births_2002_over, formula = `Birth Rate` ~ Year_New + State)
+
+tmp2 <- capture.output(summary(model2))
+
+cat(tmp2[c(3:4, 9:68)], sep='\n')
+```
 
 
 

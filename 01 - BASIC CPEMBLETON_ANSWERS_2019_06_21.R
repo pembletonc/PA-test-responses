@@ -70,7 +70,24 @@ seq_along(c(1995:2017))
 
 #4. a) Did birth rates increase or decrease over time?
 
+Births_2002_over <- Births %>% filter(Year >= 2003)
 
+Births_2002_over <- Births_2002_over %>% mutate(Year_New = Year-2003)
+
+model1 <- lm(data = Births_2002_over, formula = `Birth Rate` ~ Year_New)
+
+tmp <- capture.output(summary(model1))
+cat(tmp[c(3:4, 9:13, 16:17)], sep='\n')
+
+
+#-----
+model2 <- lm(data = Births_2002_over, formula = `Birth Rate` ~ Year_New + State)
+
+tmp2 <- capture.output(summary(model2))
+
+cat(tmp2[c(3:4, 9:68)], sep='\n')
+
+confint(model2)
 #4. b) Interpretation of the intercept term
 
 
