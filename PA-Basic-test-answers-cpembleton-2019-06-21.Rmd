@@ -12,12 +12,105 @@ output: distill::distill_article
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Distill is a publication format for scientific and technical writing, native to the web. 
+# 1. Load the Data
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(naniar)
+library(kableExtra)
+library(DataExplorer)
+```
 
-Learn more about using Distill for R Markdown at <https://rstudio.github.io/distill>.
+
+```{r, warning=FALSE, message=FALSE}
+paths <- paste0("fertility-challenge/", list.files("fertility-challenge/", pattern = "*.txt"))
+Births <- map_dfr(paths, ~ read_tsv(.x))
+```
+
+Looks like on the load there were some parsing errors with only 1 col present out of 10 - will examine closer in next stage.
+
+# 2. Exploratory Data Analysis
+
+Can get to know the data a few ways:
+
+```{r}
+summary(Births)
+```
+
+
+```{r}
+#using DataExplorer
+
+plot_intro(Births, ggtheme = theme_minimal())
+
+```
+
+
+What is the missing data situation like:
+```{r, echo=FALSE, layout="l-body"}
+plot_missing(Births, ggtheme = theme_minimal())
+```
+
+
+Alot of NA values present in the dataset, especially in the Notes variable which looks like a data dictionary column added to the bottom of each .txt file:
+
+```{r, echo=FALSE, layout="l-body"}
+Births %>% 
+  group_by(Notes) %>% 
+  tally %>% 
+  arrange(desc(n)) %>% 
+  rmarkdown::paged_table(options = list(rows.print = 10))
+```
+
+Overall, seems like an inconsistency with the way the data is structured rather than missing-missing variables.  
+
+Notes contains ```NA``` values, Total values, and descriptive values. The Total values look like sum values added to the end of each state, per file:
+
+```{r}
+Births %>% filter(Notes == "Total") %>% 
+  select(State, Year, Notes, Births, everything()) %>% 
+  rmarkdown::paged_table(options = list(rows.print = 10))
+
+```
+
+These totals in the Notes column won't be helpful because they're based on the file year ranges, and the other notes look like data dictionary types of data, so both of these can be removed altogether by removing all of the variables that are NOT ```NA```, then drop the column altogether to remove the descriptive text.
+
+```{r}
+Births <- Births %>% filter(is.na(Notes)) %>% select(-Notes)
+```
+
+Without those tricky variables can get a better look, which shows that the entire first file (1995 - 2002) doesn't have the same data as the other files, something to keep in mind for later, and for when calculating any summary stats.
+
+
+```{r, layout="l-body-outset"}
+Births %>% 
+  group_by(Year) %>% 
+  naniar::gg_miss_var(show_pct = TRUE, facet = Year) +
+  ggtitle("% missing values, by Year")
+```
+
+And what the relationship between different missing values is of these:
+
+```{r, layout="l-body-outset"}
+Births %>% 
+  naniar::gg_miss_upset()
+
+```
+
+Great, with the newly cleaned dataset, I can now start with the analysis.
+
+## Time Series Plot
+
+
+
+
+
+
+
+
+
 
 
 
