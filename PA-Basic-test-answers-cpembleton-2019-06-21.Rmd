@@ -189,7 +189,7 @@ cat(tmp[c(3:4, 9:13, 16:17)], sep='\n')
 
 Which can be graphically represented as:
 
-```{r}
+```{r, layout = "l-body-outset"}
 
 ggplot(Births_2002_over, aes(x = Year, y = `Birth Rate`)) +
   geom_point() +
@@ -226,12 +226,13 @@ cat(tmp2[c(3:4, 9:68)], sep='\n')
 A differences in differences (DD) analysis can be described as an analysis where outcomes are observed for two groups during two time periods,an analysis which is widespread in use although has been criticized for showing inconsistencies in resultant standard errors^[https://economics.mit.edu/files/750]. This criticism should be considered when interpreting the results of a DD analysis, but nonetheless does not mean the analysis should not be completed. 
 
 ## 5.1 Difference in Differences Case: Effect of Abstinance Policy in Three U.S. States  
-I will use a a diffs-in-diffs analysis to create a plot on an abstinence only policy that was implemented in 2008 in three states: New Jersey, Georgia and Texas. The plot examines whether the parallel trends assumptions are met in the treated states versus the control states. 
+I will use a a diffs-in-diffs analysis to create a plot on an abstinence only policy that was implemented in 2008 in three states: New Jersey, Georgia and Texas. The plot examines whether the parallel trends assumptions are met in the treated states versus the control states.   
+
 <aside>
 This will be completed using only states that have population denominators.
-</aside>
+</aside>  
 
-First, the data should include only that with population data, and include an identifer differentiating the states with and without the policy.
+
 ```{r}
 Births_pop <- Births %>% 
   filter(`Total Population` > 0) 
@@ -247,12 +248,13 @@ Births_treated <- Births_pop %>%
 
 ```
 
+First, the data should include only that with population data, and include an identifer differentiating the states with and without the policy, stored as Births_treated.  
 
 When examining to see whether or not the parallel trends assumption is broken, a visual inspection works:
 
-> "Although there is no statistical test for this assumption, visual inspection is useful when you have observations over many time points."^https://www.mailman.columbia.edu/research/population-health-methods/difference-difference-estimation
+> "Although there is no statistical test for this assumption, visual inspection is useful when you have observations over many time points."  ^[https://www.mailman.columbia.edu/research/population-health-methods/difference-difference-estimation]
 
-```{r}
+```{r, layout = "l-body-outset"}
 ggplot(Births_treated, aes(Year, `Fertility Rate`, color = as.logical(states_treated))) +
   stat_summary(geom = "line") +
   geom_vline(xintercept = 2008) +
@@ -263,18 +265,16 @@ ggplot(Births_treated, aes(Year, `Fertility Rate`, color = as.logical(states_tre
 
 Based on visual inspection, the trends between both treated and non-treated states are similar, so the assumption is not violated.
 
-## 5.2 Estimating the impact of the 2008 policy on the fertility rates
+## 5.2 Estimating the impact of the 2008 policy on fertility rates between states
 
-DD is "usually implemented as an interaction term between time and treatment variables in a regression model"^https://www.mailman.columbia.edu/research/population-health-methods/difference-difference-estimation; hence looking at the relationship between the treated states and the time of the intervention, the interaction term can be gathered as:
+DD is "usually implemented as an interaction term between time and treatment variables in a regression model" ^[https://www.mailman.columbia.edu/research/population-health-methods/difference-difference-estimation]; hence looking at the relationship between the treated states and the time of the intervention, the interaction term can be gathered as:
 
 ```{r}
 model = lm(`Fertility Rate` ~ states_treated*post2008, data = Births_treated)
-
 summary(model)
 ```
 
-
-Which gives a residual standard error of 7.344, indicating that the treatment *increased* by 7.344. 
+Producing a residual standard error of 7.344, indicating that the treatment *increased* by 7.344. 
 
 In an alternative model, I can find a similar results increasing by 7.268, a similar result:
 
