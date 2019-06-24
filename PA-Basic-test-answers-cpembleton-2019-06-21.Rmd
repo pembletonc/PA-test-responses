@@ -1,14 +1,17 @@
 ---
 title: "Birth Rates in the US from 1995 to 2017 : An Exploratory Analysis"
 description: |
-  Submitted for Precision-Analytics Entry Exam
+  Responses Submitted for Precision-Analytics Entry Exam
 author:
   - name: Corey Pembleton
     url: https://data-break.netlify.com
     affiliation: Precision-Analytics
     affiliation_url: https://www.precision-analytics.ca/
 date: "`r Sys.Date()`"
-output: distill::distill_article
+output: 
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -29,17 +32,17 @@ paths <- paste0("fertility-challenge/", list.files("fertility-challenge/", patte
 Births <- map_dfr(paths, ~ read_tsv(.x))
 ```
 
-Looks like on the load there were some parsing errors with only 1 col present out of 10 - will examine closer in next stage.
+Looks like on the data load some parsing errors occured in one of the columns where only one of the 10 columns is used (Notes column) - will review this later.
 
 # 2. Exploratory Data Analysis
 
-Can get to know the data a few ways, first, a quick summary of what it looks like:
+Can get to know the data a few ways, first, a summary of what it looks like w/ base R:
 
 ```{r}
 summary(Births)
 ```
 
-And to visualize this by type and oberservation, the ```DataExplorer``` package can paint a quick picture quickly:
+And to visualize this by type and oberservation, the ```DataExplorer``` package can help:
 
 ```{r, echo=FALSE}
 #using DataExplorer
@@ -51,17 +54,14 @@ plot_intro(Births,
 ```
 
 
-This shows something of a mixed picture - with not a single column or row that is complete!  
-
-Looking at the missing data by variable shows some patterns worth exploring further:
+This shows something of a mixed picture - with not a single column or row that is complete, looks mostly due to that Notes column, but maybe other data is missing. Looking at the missing data by variable shows some patterns worth exploring further:
 
 
 ```{r, echo=FALSE, layout="l-body"}
 plot_missing(Births, ggtheme = theme_minimal()) + ggtitle("Overview of missing data")
 ```
 
-
-Alot of NA values present in the dataset, especially in the Notes variable which looks like a data dictionary column added to the bottom of each .txt file:
+The Notes variable which looks like a data dictionary column added to the bottom of each .txt file that was loaded:
 
 ```{r, echo=FALSE, layout="l-body"}
 Births %>% 
@@ -71,9 +71,7 @@ Births %>%
   rmarkdown::paged_table(options = list(rows.print = 10))
 ```
 
-Overall, seems like an inconsistency with the way the data is structured rather than missing-missing variables.  
-
-Notes contains ```NA``` values, Total values, and descriptive values. The Total values look like sum values added to the end of each state, per file:
+Looking at Notes closer: it contains ```NA``` values, Total values, and descriptive values. The Total row look like sum values added to the end of each state, per file:
 
 ```{r}
 Births %>% filter(Notes == "Total") %>% 
@@ -82,13 +80,12 @@ Births %>% filter(Notes == "Total") %>%
 
 ```
 
-These totals in the Notes column won't be helpful because they're based on the file year ranges, and the other notes look like data dictionary types of data, so both of these can be removed altogether by removing all of the variables that are NOT ```NA```, then drop the column altogether to remove the descriptive text.
+These totals  won't be helpful because they're based on the file year ranges, and the other notes look like data dictionary types of data, so both of these can be removed altogether by keeping only the variables that are NOT ```NA```, then drop the column altogether to remove the descriptive text.
 
 ```{r}
 Births <- Births %>% filter(is.na(Notes)) %>% select(-Notes)
 ```
-
-Without those tricky variables can get a better look, which shows that the entire first file (1995 - 2002) doesn't have the same data as the other files, something to keep in mind for later, and for when calculating any summary stats.
+With notes removed, can get a more accurate view of missing data. The entire first file (1995 - 2002) doesn't have the same data as the other files, something to keep in mind for any future analysis.
 
 
 ```{r, layout="l-body-outset"}
@@ -98,7 +95,7 @@ Births %>%
   ggtitle("% missing values, by Year")
 ```
 
-And what the relationship between different missing values is of these:
+```naniar::gg_miss_upset()``` is a good way to see what the relationship between missing values is:
 
 ```{r, layout="l-body-outset"}
 Births %>% 
@@ -106,19 +103,17 @@ Births %>%
 
 ```
 
-It appears now that the only missing values are from those years without the variables listed in the figure above, can do a quick check of that to verify:
+It appears that the only missing values are from those years without the variables listed in the figure above, can do a quick check of that to verify:
 
 ```{r}
-
 Births %>% 
   filter(Year < 2003) %>% 
   nrow()
-
 ```
 
-Looks good - time to get on with some more fun things than data cleaning!  
+Looks good (for the purposes of this exercise) - time to get on with some more fun things than data cleaning!  
 
-## Time Series Plot  
+## 3. Time Series Plot  
 
 The time series plot shows a peak in births around 2007, with a trend towards the birth figures of the late 1990's returning in the mid 2010's. 
 
@@ -145,8 +140,6 @@ Births %>%
 
 ```
 
-
-
 Looking at each state, we see that the golden state has the highest count of births (but tied for last in basketball championship titles in 2019).
 
 ```{r, echo=FALSE, layout = "l-body-outset"}
@@ -172,12 +165,11 @@ Births %>%
   ggtitle("Total Annual US Births by State, 1995 - 2017")
 ```
 
-
-## How does are birth rates impacted by state and by year?
+## 4. Linear Regression: BR impact by year & state?
 
 Using linear regression, we can estimate how state and year influence birth rates over time:
 
-Looking first at Year alone:
+Looking first at ```Year``` alone:
 
 ```{r}
 
@@ -214,13 +206,10 @@ ggplot(Births_2002_over, aes(x = Year, y = `Birth Rate`)) +
 
 ```
 
+## 4.1  Interpretation  
+This linear model tells me that in 2003 there was a birth rate of 14.2, with an estimated decrease of .16 every year. The year variable is [centered](http://www.med.mcgill.ca/epidemiology/joseph/courses/EPIB-621/centered_var.pdf) around the actual years (rather than year 0), which makes the interpretation easier to interpret by essentially shifting the y-axis to the years of interest (post 2003). 
 
-
-### Interpretation  
-This linear model tells me that in 2003 there was a birth rate of 14.2, with an estimated decrease of .16 every year. The year variable is [centered](http://www.med.mcgill.ca/epidemiology/joseph/courses/EPIB-621/centered_var.pdf) around the actual years given (rather than year 0), which makes the interpretation easier to understand, essentially shifting the y-axis to the years of interest. 
-
-
-## Year and State
+### Year and State
 
 When accounting for State, the annual change over time sees a very marginally increased rate of decrease (from -.1596 to -.159639), and varying results for different states, with some seeing a decrease and others an increase in the birth rate over time. 
 
@@ -232,10 +221,20 @@ tmp2 <- capture.output(summary(model2))
 cat(tmp2[c(3:4, 9:68)], sep='\n')
 ```
 
+# 5. Diffs-in-Diffs Analysis
+
+A differences in differences (DD) analysis can be described as an analysis where outcomes are observed for two groups during two time periods,an analysis which is widespread in use although has been criticized for showing inconsistencies in resultant standard errors^[https://economics.mit.edu/files/750]. This criticism should be considered when interpreting the results of a DD analysis, but nonetheless does not mean the analysis should not be completed. 
+
+## 5.1 Difference in Differences Case: Effect of Abstinance Policy in Three U.S. States  
+I will use a a diffs-in-diffs analysis to create a plot on an abstinence only policy that was implemented in 2008 in three states: New Jersey, Georgia and Texas. The plot examines whether the parallel trends assumptions are met in the treated states versus the control states. 
+
+<aside>
+This will be completed using only states that have population denominators.
+</aside>
 
 
 
-
+## 5.2 Estimating the impact of the 2008 policy on the fertility rates
 
 
 

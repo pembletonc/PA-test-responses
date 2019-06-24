@@ -43,8 +43,6 @@ Births %>%
 ggplot(data = ss, aes(x = date, y = pop)) + 
   geom_line(color = "#FC4E07", size = 2)
 
-Births$Births
-
 Births %>% 
   group_by(Year) %>% 
   summarise(total = sum(Births)) %>% 
@@ -63,8 +61,6 @@ Births %>%
         plot.margin = unit(c(1,1,0.5,1), "cm")) +
   ggtitle("Total Annual US Births, 1995 - 2017")
 
-
-seq_along(c(1995:2017))
 
 #4. Regression Model Observing how state and year impact birth rates
 
@@ -91,4 +87,82 @@ confint(model2)
 #4. b) Interpretation of the intercept term
 
 
+
+
+
+#DD test questions
+Births_ <- Births 
+
+library(did)
+
+#select only states that have population data
+Births <- Births %>% 
+  filter(`Total Population` > 0) 
+
+Births_treated <- Births %>% 
+  mutate(
+    treat = case_when(
+      State %in% c("New Jersey", "Georgia", "Texas") ~ 1,
+      TRUE ~ 0
+      ),
+    first.treat = case_when(
+      treat == 1 ~ 2008,
+      TRUE ~ 0
+      ),
+    interaction = treat*first.treat
+    ) #create an interaction term
+
+reg <- lm(data = Births_treated, Year ~ treat + first.treat + interaction)
+
+Births_treated$interaction
+
+summary(reg)
+
+
+ggplot(Births_treated, aes(Year, `Total Population`, color = as.logical(Births_treated$treat))) +
+  stat_summary(geom = 'line') +
+  geom_vline(xintercept = 2008) +
+  theme_minimal(12)
+
+summary(lm(data = Births_treated, treat ~ scale(Year, scale=FALSE)*`first.treat`))
+
+
+
+
+#4. Estimate the impact of the policy using a DID approach on the fertility rate. 
+
+
+Births_NGT <- Births %>% filter(State %in% c("New Jersey", "Georgia", "Texas"))
+
+Births_2008 <- Births %>% filter(Year <= 2008)
+
+
+
+
+
+
+
+
+
+
+Births_d <- Births %>% 
+  Births_treated <- Births %>% 
+  mutate(
+    treat = case_when(
+      State %in% c("New Jersey", "Georgia", "Texas") ~ 1,
+      TRUE ~ 0
+    ),
+    first.treat = case_when(
+      Year == 2008 & State %in% c("New Jersey", "Georgia", "Texas")  ~ 1,
+      TRUE ~ 0
+    ),
+    interaction = treat*first.treat
+  ) #create an interaction term
+
+
+
+
+t <- Births_treated %>% lm(data = ., `Total Population` ~ scale(`Total Population`, scale =F)*first.treat)
+
+summary(t)
 
