@@ -101,31 +101,26 @@ Births <- Births %>%
 
 Births_treated <- Births %>% 
   mutate(
-    treat = case_when(
+    states_treated = case_when(
       State %in% c("New Jersey", "Georgia", "Texas") ~ 1,
       TRUE ~ 0
       ),
-    first.treat = case_when(
-      treat == 1 ~ 2008,
-      TRUE ~ 0
-      ),
-    interaction = treat*first.treat
-    ) #create an interaction term
+    post2008 = Year >= 2008 
+      )
 
-reg <- lm(data = Births_treated, Year ~ treat + first.treat + interaction)
-
-Births_treated$interaction
-
-summary(reg)
-
-
-ggplot(Births_treated, aes(Year, `Total Population`, color = as.logical(Births_treated$treat))) +
-  stat_summary(geom = 'line') +
+ggplot(Births_treated, aes(Year, `Fertility Rate`, color = as.logical(states_treated))) +
+  stat_summary(geom = "line") +
   geom_vline(xintercept = 2008) +
   theme_minimal(12)
 
-summary(lm(data = Births_treated, treat ~ scale(Year, scale=FALSE)*`first.treat`))
+model = lm(`Fertility Rate` ~ states_treated*post2008, data = Births_treated)
 
+
+model2 = lm(`Fertility Rate` ~ Year + states_treated + states_treated*post2008, data = Births_treated)
+
+
+Births_treated$`Fertility Rate`
+summary(model2)
 
 
 
